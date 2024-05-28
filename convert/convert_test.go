@@ -13,36 +13,13 @@ import (
 func convertFull(t *testing.T, p string) (llm.KV, llm.Tensors) {
 	t.Helper()
 
-	mf, err := GetModelFormat(p)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	params, err := mf.GetParams(p)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	arch, err := mf.GetModelArch("", p, params)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if err := arch.LoadVocab(); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := arch.GetTensors(); err != nil {
-		t.Fatal(err)
-	}
-
 	f, err := os.CreateTemp(t.TempDir(), "f16")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer f.Close()
 
-	if err := arch.WriteGGUF(f); err != nil {
+	if err := Convert(p, f); err != nil {
 		t.Fatal(err)
 	}
 
@@ -83,7 +60,7 @@ func TestConvertFull(t *testing.T) {
 			kv, tensors := convertFull(t, p)
 
 			if kv.Architecture() != tt.arch {
-				t.Fatalf("expected llama, got %s", kv.Architecture())
+				t.Fatalf("expected %s, got %s", tt.arch, kv.Architecture())
 			}
 
 			if kv.FileType().String() != "F16" {
